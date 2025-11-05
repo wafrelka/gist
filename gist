@@ -105,6 +105,9 @@ unarchive() {
 prog="${0##*/}"
 
 case "${1:-}" in
+    --version)
+        printf '%s\n' "0.0.1"
+        ;;
     root)
         printf '%s\n' "$root"
         ;;
