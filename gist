@@ -105,6 +105,9 @@ unarchive() {
 prog="${0##*/}"
 
 case "${1:-}" in
+    root)
+        printf '%s\n' "$root"
+        ;;
     create)
         shift
         create "$@"
