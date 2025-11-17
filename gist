@@ -28,7 +28,7 @@ create_one() {
     local gist_json="$dir/.gist.json"
     local vscode_settings_json="$dir/.vscode/settings.json"
     mkdir -p "$dir/.vscode"
-    [ -f "$gist_json" ] || printf '{"created_at": "%s"}\n' "$now" > "$gist_json"
+    [ -f "$gist_json" ] || jq --arg created_at "$now" '{created_at: $created_at}' --null-input > "$gist_json"
     [ -f "$vscode_settings_json" ] || printf '{\n}' > "$vscode_settings_json"
 
     info "Gist '$name' created"
