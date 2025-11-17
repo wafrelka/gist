@@ -52,16 +52,24 @@ list() {
     "${find_cmd[@]}" | while read -r file; do
         local dir="${file%/.gist.json}"
         local name="${dir##*/}"
-        if jq -e '.archived_at' "$file" &>/dev/null; then
-            continue
-        fi
         if ! jq -e '.created_at' "$file" &>/dev/null; then
             continue
         fi
+        local status=""
+        if jq -e '.archived_at' "$file" &>/dev/null; then
+            status="archived"
+        fi
         local created_at
-        created_at="$(jq -r '.created_at' "$file" 2>/dev/null | sed 's/T/\t/g')"
-        printf '%s\t%s\n' "$created_at" "$name"
-    done | sort --reverse | awk -F'\t' '{printf "%s / %s\n", $1, $3}'
+        local created
+        created_at="$(jq -r '.created_at' "$file")"
+        created="$(date --date "$created_at" '+%Y-%m-%d')"
+
+        local sort_key=""
+        [ "$status" = "archived" ] && sort_key+="0::" || sort_key+="1::"
+        sort_key+="$(date --date "$created_at" '+%s')::"
+
+        printf '%s\t%s\t%s\n' "$sort_key" "$created" "$name"
+    done | sort --reverse | awk -F'\t' '{printf "%s / %s\n", $2, $3}'
 }
 
 archive_one() {
