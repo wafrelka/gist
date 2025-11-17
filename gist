@@ -62,14 +62,17 @@ list() {
         local created_at
         local created
         created_at="$(jq -r '.created_at' "$file")"
-        created="$(date --date "$created_at" '+%Y-%m-%d')"
+        created="$(date --date "$created_at" '+%Y-%m-%d %H:%M')"
 
         local sort_key=""
         [ "$status" = "archived" ] && sort_key+="0::" || sort_key+="1::"
         sort_key+="$(date --date "$created_at" '+%s')::"
 
-        printf '%s\t%s\t%s\n' "$sort_key" "$created" "$name"
-    done | sort --reverse | awk -F'\t' '{printf "%s / %s\n", $2, $3}'
+        local footer=""
+        [ -n "$status" ] && footer=" ($status)"
+
+        printf '%s\t%s\t%s\t%s\n' "$sort_key" "$created" "$name" "$footer"
+    done | sort --reverse | awk -F'\t' '{printf "%s | %s%s\n", $2, $3, $4}'
 }
 
 archive_one() {
