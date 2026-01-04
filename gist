@@ -9,17 +9,19 @@ error() {
     printf "\e[31m%s\e[m\n" "$*" >&2
 }
 
-root="${GIST_ROOT:-}"
-if [[ -z "$root" ]]; then
-    error '$GIST_ROOT is not set'
-    exit 1
-fi
-root="$(realpath "$root")"
+get_root() {
+    gist_root="${GIST_ROOT:-}"
+    if [[ -z "$gist_root" ]]; then
+        error '$GIST_ROOT is not set'
+        exit 1
+    fi
+    realpath "$gist_root"
+}
 
 create_one() {
     local name="$1"
     local now="$2"
-    local dir="$root/$name"
+    local dir="$(get_root)/$name"
     if [[ -d "$dir" ]]; then
         error "Gist '$name' already exists"
         return 1
@@ -45,9 +47,9 @@ create() {
 list() {
     local find_cmd
     if fd --version &>/dev/null; then
-        find_cmd=(fd --type f --hidden --follow --glob .gist.json "$root")
+        find_cmd=(fd --type f --hidden --follow --glob .gist.json "$(get_root)")
     else
-        find_cmd=(find "$root" -type f -name .gist.json)
+        find_cmd=(find "$(get_root)" -type f -name .gist.json)
     fi
     "${find_cmd[@]}" | while read -r file; do
         local dir="${file%/.gist.json}"
@@ -77,7 +79,7 @@ list() {
 
 archive_one() {
     local name="$1"
-    local dir="$root/$name"
+    local dir="$(get_root)/$name"
     local gist_json="$dir/.gist.json"
     if [ ! -f "$gist_json" ]; then
         error "Gist '$name' does not exist"
@@ -97,7 +99,7 @@ archive() {
 
 unarchive_one() {
     local name="$1"
-    local dir="$root/$name"
+    local dir="$(get_root)/$name"
     local gist_json="$dir/.gist.json"
     if [ ! -f "$gist_json" ]; then
         error "Gist '$name' does not exist"
@@ -120,7 +122,7 @@ case "${1:-}" in
         printf '%s\n' "0.0.1"
         ;;
     root)
-        printf '%s\n' "$root"
+        printf '%s\n' "$(get_root)"
         ;;
     create)
         shift
