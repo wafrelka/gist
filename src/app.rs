@@ -11,21 +11,25 @@ use crate::{
 };
 
 pub fn run(cli: Cli, now: DateTime<Utc>, mut output: impl Write) -> anyhow::Result<()> {
-    let repository = Repository::open(&cli.root)?;
+    let root = match cli.root {
+        Some(root) => root,
+        None => anyhow::bail!("gist root is not specified"),
+    };
+    let repository = Repository::open(&root)?;
     match cli.command {
-        Command::Root => root(&repository, &mut output),
-        Command::Create { names } => create(&repository, &names, now),
-        Command::List => list(&repository, &mut output),
-        Command::Archive { names } => archive(&repository, &names, now),
-        Command::Unarchive { names } => unarchive(&repository, &names),
+        Command::Root => run_root(&repository, &mut output),
+        Command::Create { names } => run_create(&repository, &names, now),
+        Command::List => run_list(&repository, &mut output),
+        Command::Archive { names } => run_archive(&repository, &names, now),
+        Command::Unarchive { names } => run_unarchive(&repository, &names),
     }
 }
 
-fn root(repository: &Repository, output: &mut impl Write) -> anyhow::Result<()> {
+fn run_root(repository: &Repository, output: &mut impl Write) -> anyhow::Result<()> {
     writeln!(output, "{}", repository.root().display()).context("cannot write to output")
 }
 
-fn create(
+fn run_create(
     repository: &Repository,
     names: &[String],
     created_at: DateTime<Utc>,
@@ -37,7 +41,7 @@ fn create(
     })
 }
 
-fn list(repository: &Repository, output: &mut impl Write) -> anyhow::Result<()> {
+fn run_list(repository: &Repository, output: &mut impl Write) -> anyhow::Result<()> {
     let mut gists = Vec::new();
     for gist in repository.list()? {
         match gist {
@@ -70,7 +74,7 @@ fn print_gist(output: &mut impl Write, gist: &Gist) -> anyhow::Result<()> {
     .context("cannot write to output")
 }
 
-fn archive(
+fn run_archive(
     repository: &Repository,
     names: &[String],
     archived_at: DateTime<Utc>,
@@ -82,7 +86,7 @@ fn archive(
     })
 }
 
-fn unarchive(repository: &Repository, names: &[String]) -> anyhow::Result<()> {
+fn run_unarchive(repository: &Repository, names: &[String]) -> anyhow::Result<()> {
     run_each(names, |name| {
         repository.unarchive(name)?;
         info!("unarchived {name}");
